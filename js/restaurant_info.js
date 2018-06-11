@@ -16,6 +16,9 @@ window.initMap = () => {
       });
       fillBreadcrumb();
       DBHelper.mapMarkerForRestaurant(self.restaurant, self.map);
+      google.maps.event.addListener(self.map, "tilesloaded", function() {
+        setTimeout(disableGoogleMapsFocus, 1000)
+      });
     }
   });
 }
@@ -172,4 +175,22 @@ getParameterByName = (name, url) => {
   if (!results[2])
     return '';
   return decodeURIComponent(results[2].replace(/\+/g, ' '));
+}
+
+disableGoogleMapsFocus = () => {
+  document.querySelectorAll('#map a').forEach(function(item) {
+      item.setAttribute('tabindex','-1');
+  });
+  document.querySelectorAll('#map button').forEach(function(item) {
+      item.setAttribute('tabindex','-1');
+  });
+  document.querySelectorAll('#map div').forEach(function(item) {
+      item.setAttribute('tabindex','-1');
+  });
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').then(function() {
+  }, function() {
+  });
 }

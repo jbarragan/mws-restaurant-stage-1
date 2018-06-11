@@ -1,4 +1,4 @@
-var CACHE_NAME = 'restaurants-cache-v6';
+var CACHE_NAME = 'restaurants-cache-v7';
 var resources = [
   '/',
   '/index.html',

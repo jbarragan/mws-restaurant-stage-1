@@ -80,6 +80,9 @@ window.initMap = () => {
     center: loc,
     scrollwheel: false
   });
+  google.maps.event.addListener(self.map, "tilesloaded", function() {
+    setTimeout(disableGoogleMapsFocus, 1000)
+  });
   updateRestaurants();
 }
 
@@ -178,6 +181,20 @@ addMarkersToMap = (restaurants = self.restaurants) => {
     self.markers.push(marker);
   });
 }
+
+
+disableGoogleMapsFocus = () => {
+  document.querySelectorAll('#map a').forEach(function(item) {
+      item.setAttribute('tabindex','-1');
+  });
+  document.querySelectorAll('#map button').forEach(function(item) {
+      item.setAttribute('tabindex','-1');
+  });
+  document.querySelectorAll('#map div').forEach(function(item) {
+      item.setAttribute('tabindex','-1');
+  });
+}
+
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js').then(function() {
