@@ -101,6 +101,7 @@ updateRestaurants = () => {
       console.error(error);
     } else {
       resetRestaurants(restaurants);
+      fillRestaurantsHTML();
     }
   })
 }
