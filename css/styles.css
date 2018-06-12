@@ -58,6 +58,11 @@ nav {
   background-color: #252831;
   text-align:center;
 }
+nav.breadcrumb {
+  height: 40px;
+  background-color: #f3f3f3;
+  text-align:center;
+}
 nav h1 {
   margin: auto;
 }
@@ -74,7 +79,7 @@ nav h1 a {
     background-color: #eee;
     font-size: 17px;
     margin: 0;
-    width: calc(50% - 80px);
+    text-align: left;
 }
 
 /* Display list items side by side */
@@ -199,7 +204,7 @@ nav h1 a {
   height: 87%;
   position: fixed;
   right: 0;
-  top: 80px;
+  top: 120px;
   width: 50%;
 }
 .inside #map {
