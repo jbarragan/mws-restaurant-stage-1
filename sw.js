@@ -1,4 +1,4 @@
-var CACHE_NAME = 'restaurants-cache-v7';
+var CACHE_NAME = 'restaurants-cache-v10';
 var resources = [
   '/',
   '/index.html',
@@ -35,8 +35,13 @@ self.addEventListener('activate', function(event) {
 });
 
 self.addEventListener('fetch', function(event) {
+  const url = new URL(event.request.url);
+  let request = event.request;
+  if (url.pathname.startsWith('/restaurant.html')) {
+    request = 'restaurant.html';
+  }
   event.respondWith(
-    caches.match(event.request)
+    caches.match(request)
       .then(function(response) {
         if (response) {
           return response;
