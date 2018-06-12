@@ -144,11 +144,10 @@ nav h1 a {
   background-color: #fff;
   border: 2px solid #ccc;
   font-family: Arial,sans-serif;
-  margin: 0px 15px 30px 0px;
+  margin: 0px auto 30px auto;
   min-height: 380px;
   padding: 0 30px 25px;
   text-align: left;
-  width: 270px;
   -webkit-column-break-inside: avoid;
   page-break-inside: avoid;
   break-inside: avoid;
@@ -271,7 +270,6 @@ nav h1 a {
   overflow: hidden;
   padding: 0 0 20px;
   position: relative;
-  width: 85%;
 	border-radius: 25px 0 25px 0;
 }
 .reviews-title p {
