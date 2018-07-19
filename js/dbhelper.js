@@ -315,7 +315,7 @@
   }
 }());
 
-const VERSION = 10;
+const VERSION = 'v10';
 const IDB_NAME = 'restaurants-' + VERSION;
 
 /**
