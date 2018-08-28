@@ -332,6 +332,13 @@ class DBHelper {
     return `http://localhost:${port}/restaurants`;
   }
 
+  /**
+   * Reviews URL.
+   */
+  static get REVIEWS_URL() {
+    const port = 1337 // Change this to your server port
+    return `http://localhost:${port}/reviews`;
+  }
 
   /**
    * Fetch all restaurants.
@@ -365,6 +372,40 @@ class DBHelper {
     });
   }
 
+  static cacheReviews(restaurant_id, json){
+    DBHelper.dbPromise.then(db => {
+      const tx = db.transaction('reviews', 'readwrite');
+      const objectStore = tx.objectStore('reviews');
+      if( Array.isArray(json) ){
+        json.forEach(function(review){
+          objectStore.put(review);
+        });
+      }else{
+        objectStore.put(json);
+      }
+      return tx.complete;
+    });
+  }
+
+  static deleteCacheReview(review_id){
+    DBHelper.dbPromise.then(db => {
+      const tx = db.transaction('new-reviews', 'readwrite');
+      const objectStore = tx.objectStore('new-reviews');
+      objectStore.delete(review_id);
+      return tx.complete;
+    });
+  }
+
+  static saveReview(review, callback) {
+    DBHelper.openIDB();
+    DBHelper.dbPromise.then(db => {
+      const tx = db.transaction('new-reviews', 'readwrite');
+      const objectStore = tx.objectStore('new-reviews');
+      objectStore.put(review);
+      return callback(null, review);
+    });
+  }
+
   static getCacheRestaurants(callback){
     return DBHelper.dbPromise.then(db => {
       return db.transaction('restaurants', 'readwrite')
@@ -378,8 +419,36 @@ class DBHelper {
     return DBHelper.dbPromise.then(db => {
       return db.transaction('restaurants', 'readwrite')
                .objectStore('restaurants').get(parseInt(restaurant_id));
-    }).then( function(restaurant){
-      return callback(null, restaurant);
+      }).then( function(restaurant){
+        return callback(null, restaurant);
+      });
+  }
+
+  static getCacheReviews(restaurant_id, new_reviews, callback){
+    let me = this;
+    me.new_reviews = new_reviews;
+    me.all_reviews = [];
+    return DBHelper.dbPromise.then(db => {
+      return db.transaction('reviews', 'readwrite')
+               .objectStore('reviews').index('restaurant_id').getAll(parseInt(restaurant_id));
+    }).then( function(restaurant_reviews){
+      const all_reviews = new Array();
+      me.all_reviews = all_reviews;
+      DBHelper.mergeReviews(all_reviews, me.new_reviews, restaurant_reviews);
+
+      return callback(null, all_reviews);
+    })
+    .catch( function(error) {
+      return callback(null, me.all_reviews);
+    });
+  }
+
+  static getCacheNewReviews(restaurant_id, callback){
+    return DBHelper.dbPromise.then(db => {
+      return db.transaction('new-reviews', 'readwrite')
+               .objectStore('new-reviews').index('restaurant_id').getAll(parseInt(restaurant_id));
+    }).then( function(restaurant_reviews){
+      return restaurant_reviews;
     });
   }
 
@@ -387,8 +456,12 @@ class DBHelper {
     if (!navigator.serviceWorker) {
       DBHelper.dbPromise = Promise.resolve();
     }
-    DBHelper.dbPromise = idb.open(IDB_NAME, 1, upgradeDB => {
+    DBHelper.dbPromise = idb.open(IDB_NAME, 2, upgradeDB => {
       upgradeDB.createObjectStore("restaurants", { keyPath: "id" });
+      const reviewsStore = upgradeDB.createObjectStore("reviews", { keyPath: "id" });
+      reviewsStore.createIndex('restaurant_id', 'restaurant_id');
+      const newReviewsStore = upgradeDB.createObjectStore("new-reviews", { keyPath: "id", autoIncrement:true });
+      newReviewsStore.createIndex('restaurant_id', 'restaurant_id');
     });
   }
 
@@ -405,6 +478,74 @@ class DBHelper {
     })
     .catch( function(error) {
       return DBHelper.getCacheRestaurant(id, callback);
+    });
+  }
+
+  static fetchReviewsByRestaurantId(restaurant_id, callback) {
+    let me = this;
+    DBHelper.getCacheNewReviews(restaurant_id).then( function(new_reviews) {
+      me.new_reviews = new_reviews;
+      return fetch( `${DBHelper.REVIEWS_URL}/?restaurant_id=${restaurant_id}` );
+    })
+    .then( response => response.json() )
+    .then( function(json) {
+      // Cache retrieved reviews
+      DBHelper.cacheReviews(restaurant_id, json);
+
+      const all_reviews = new Array();
+      DBHelper.mergeReviews(all_reviews, me.new_reviews, json);
+      DBHelper.postCacheNewReviews(me.new_reviews);
+
+      return callback(null,all_reviews);
+    })
+    .catch( function(error) {
+      return DBHelper.getCacheReviews(restaurant_id, me.new_reviews, callback);
+    });
+  }
+
+  static mergeReviews(all_reviews, new_reviews, api_reviews){
+    if( Array.isArray(api_reviews) ){
+      api_reviews.forEach(function(api_review){
+        all_reviews.push(api_review);
+      });
+    }else{
+      all_reviews.push(api_reviews);
+    }
+    if( Array.isArray(new_reviews) ){
+      new_reviews.forEach(function(new_review){
+        all_reviews.push(new_review);
+      });
+    }else{
+      all_reviews.push(new_reviews);
+    }
+  }
+
+  static postCacheNewReviews(new_reviews){
+    if( Array.isArray(new_reviews) ){
+      new_reviews.forEach(function(new_review){
+        DBHelper.postCacheNewReview(new_review);
+      });
+    }else{
+      DBHelper.postCacheNewReview(new_reviews);
+    }
+  }
+
+  static postCacheNewReview(new_review)
+  {
+    let me = this;
+    me.new_review = new_review;
+    me.new_review_id = new_review.id;
+    new_review.id = null;
+    fetch( `${DBHelper.REVIEWS_URL}/`,{
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json; charset=utf-8"
+      },
+      body: JSON.stringify(new_review)
+    })
+    .then( response => response.json() )
+    .then( function(json){
+      return DBHelper.deleteCacheReview(me.new_review_id);
     });
   }
 

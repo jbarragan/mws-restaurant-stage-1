@@ -33,7 +33,7 @@ fetchRestaurantFromURL = (callback) => {
   }
   const id = getParameterByName('id');
   if (!id) { // no id found in URL
-    error = 'No restaurant id in URL'
+    error = 'No restaurant id in URL';
     callback(error, null);
   } else {
     DBHelper.fetchRestaurantById(id, (error, restaurant) => {
@@ -42,8 +42,11 @@ fetchRestaurantFromURL = (callback) => {
         console.error(error);
         return;
       }
-      fillRestaurantHTML();
-      callback(null, restaurant)
+      DBHelper.fetchReviewsByRestaurantId(id, (error, reviews) => {
+        restaurant.reviews = reviews;
+        fillRestaurantHTML();
+        callback(null, restaurant);
+      });
     });
   }
 }
@@ -99,17 +102,12 @@ fillRestaurantHoursHTML = (operatingHours = self.restaurant.operating_hours) => 
  */
 fillReviewsHTML = (reviews = self.restaurant.reviews) => {
   const container = document.getElementById('reviews-container');
-  const title = document.createElement('h3');
-  title.innerHTML = 'Reviews';
-  container.appendChild(title);
 
   if (!reviews) {
-    const noReviews = document.createElement('p');
-    noReviews.innerHTML = 'No reviews yet!';
-    container.appendChild(noReviews);
     return;
   }
   const ul = document.getElementById('reviews-list');
+  ul.innerHTML = "";
   reviews.forEach(review => {
     ul.appendChild(createReviewHTML(review));
   });
@@ -131,7 +129,8 @@ createReviewHTML = (review) => {
   div_title.appendChild(name);
 
   const date = document.createElement('p');
-  date.innerHTML = review.date;
+  const d = new Date(review.updatedAt);
+  date.innerHTML = `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`;
   date.classList.add("reviews-date")
   div_title.appendChild(date);
 
@@ -193,6 +192,26 @@ disableGoogleMapsFocus = () => {
       item.setAttribute('tabindex','-1');
   });
 }
+
+saveReview = () => {
+  const r_name = document.getElementById('name').value;
+  const r_rating = document.getElementById('rating').value;
+  const r_comments = document.getElementById('comments').value;
+  var d = new Date();
+
+  const review = {name: r_name,
+    rating: parseInt(r_rating),
+    comments: r_comments,
+    restaurant_id: self.restaurant.id,
+    updatedAt: Date.now()
+  };
+  DBHelper.saveReview(review, saveReviewCallback);
+}
+
+saveReviewCallback = (error, review) => {
+  location.reload();
+}
+
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js').then(function() {

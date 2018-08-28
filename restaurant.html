@@ -49,7 +49,29 @@
     <!-- end restaurant -->
     <!-- Beginning reviews -->
     <section id="reviews-container">
-      <ul id="reviews-list"></ul>
+      <ul id="reviews-list">
+        <il>No reviews yet!</il>
+      </ul>
+      <h3>Reviews</h3>
+      <form>
+        <p>
+        <label for="name">Name</label>
+        <input type="text" name="name" id="name">
+        </p>
+        <p>
+        <label for="rating">Rating</label>
+        <input type="range" name="rating" id="rating" min="1" max="5" value="3"
+               oninput="ratingOutput.value = rating.value + ' star' + (rating.value > 1 ? 's' : '') ">
+        <output id="ratingOutput">3 stars</output>
+        </p>
+        <p>
+        <label for="comment">Comment</label>
+        <textarea class="commentTextArea" id="comments" name="=comments" rows="5"></textarea>
+        </p>
+        <p>
+          <input type="button" value="Save Review" onclick="saveReview()">
+        </p>
+      </form>
     </section>
     <!-- End reviews -->
   </main>
