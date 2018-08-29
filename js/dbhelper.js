@@ -424,14 +424,18 @@ class DBHelper {
       });
   }
 
-  static isFavoriteRestaurant(restaurant_id){
+  static isFavoriteRestaurant(restaurant){
+    const me = this;
+    me.restaurant = restaurant;
     return DBHelper.dbPromise.then(db => {
       return db.transaction('favorites', 'readwrite')
-               .objectStore('favorites').get(parseInt(restaurant_id));
-      }).then( function(restaurant){
-        return restaurant.favorite;
+               .objectStore('favorites').get(parseInt(restaurant.id));
+      }).then( function(result){
+        if( result )
+          return result.favorite;
+        return me.restaurant.is_favorite;
       }).catch( function(error){
-        return false;
+        return me.restaurant.is_favorite;
       });
   }
 
@@ -441,6 +445,20 @@ class DBHelper {
       const tx = db.transaction('favorites', 'readwrite');
       const objectStore = tx.objectStore('favorites');
       objectStore.put(restaurant);
+    });
+    // http://localhost:1337/restaurants/<restaurant_id>/?is_favorite=true
+    fetch( `${DBHelper.DATABASE_URL}/${restaurant_id}/?is_favorite=${isFavorite}`,{
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json; charset=utf-8"
+      }
+    })
+    .then( response => response.json() )
+    .then( function(json){
+      return;
+    })
+    .catch( function(error){
+      console.error(error);
     });
   }
 

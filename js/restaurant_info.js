@@ -60,7 +60,7 @@ fillRestaurantHTML = (restaurant = self.restaurant) => {
   me.name = name;
   me.restaurant = restaurant;
   name.innerHTML = restaurant.name;
-  DBHelper.isFavoriteRestaurant(restaurant.id).then(
+  DBHelper.isFavoriteRestaurant(restaurant).then(
     function(isFavorite){
       const name = document.getElementById('restaurant-name');
       let link = "<a aria-label='Favorite'" +
