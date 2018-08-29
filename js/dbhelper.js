@@ -424,6 +424,26 @@ class DBHelper {
       });
   }
 
+  static isFavoriteRestaurant(restaurant_id){
+    return DBHelper.dbPromise.then(db => {
+      return db.transaction('favorites', 'readwrite')
+               .objectStore('favorites').get(parseInt(restaurant_id));
+      }).then( function(restaurant){
+        return restaurant.favorite;
+      }).catch( function(error){
+        return false;
+      });
+  }
+
+  static saveFavoriteRestaurant(restaurant_id, isFavorite){
+    const restaurant = {"restaurant_id": restaurant_id, "favorite": isFavorite };
+    DBHelper.dbPromise.then(db => {
+      const tx = db.transaction('favorites', 'readwrite');
+      const objectStore = tx.objectStore('favorites');
+      objectStore.put(restaurant);
+    });
+  }
+
   static getCacheReviews(restaurant_id, new_reviews, callback){
     let me = this;
     me.new_reviews = new_reviews;
@@ -462,6 +482,7 @@ class DBHelper {
       reviewsStore.createIndex('restaurant_id', 'restaurant_id');
       const newReviewsStore = upgradeDB.createObjectStore("new-reviews", { keyPath: "id", autoIncrement:true });
       newReviewsStore.createIndex('restaurant_id', 'restaurant_id');
+      upgradeDB.createObjectStore("favorites", { keyPath: "restaurant_id" });
     });
   }
 

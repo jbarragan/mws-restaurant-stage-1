@@ -55,8 +55,24 @@ fetchRestaurantFromURL = (callback) => {
  * Create restaurant HTML and add it to the webpage
  */
 fillRestaurantHTML = (restaurant = self.restaurant) => {
+  const me = this;
   const name = document.getElementById('restaurant-name');
+  me.name = name;
+  me.restaurant = restaurant;
   name.innerHTML = restaurant.name;
+  DBHelper.isFavoriteRestaurant(restaurant.id).then(
+    function(isFavorite){
+      const name = document.getElementById('restaurant-name');
+      let link = "<a aria-label='Favorite'" +
+                 " style='text-decoration: none; color: black; cursor: pointer'" +
+                 " onclick='return toogleFavorite();'" +
+                 (isFavorite ? " selected" : "") +
+                 " >" +
+                 (isFavorite ? "&#9733;" : "&#9734;") + "</a> "
+      name.innerHTML = link + me.restaurant.name;
+    })
+    .catch(function(error){
+    });
 
   const address = document.getElementById('restaurant-address');
   address.innerHTML = restaurant.address;
@@ -210,6 +226,21 @@ saveReview = () => {
 
 saveReviewCallback = (error, review) => {
   location.reload();
+}
+
+toogleFavorite = () => {
+  const name = document.getElementById('restaurant-name');
+  const isFavorite = !name.innerHTML.includes("selected");
+  DBHelper.saveFavoriteRestaurant(self.restaurant.id, isFavorite);
+
+  let link = "<a aria-label='Favorite'" +
+                 " style='text-decoration: none; color: black; cursor: pointer'" +
+                 " onclick='return toogleFavorite();'" +
+                 (isFavorite ? " selected" : "") +
+                 " >" +
+                 (isFavorite ? "&#9733;" : "&#9734;") + "</a> "
+  name.innerHTML = link + self.restaurant.name;
+  return false;
 }
 
 
